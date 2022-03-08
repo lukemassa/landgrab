@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import random
+import argparse
 
 DICE_SIDES = 6
 
@@ -70,28 +71,43 @@ def probability_desired_remaining(attackers, defending_territories, desired_rema
     # TODO: Make the code figure out num of correct trials based on some tolerance
     success = 0.0
     total = 0.0
+    failures = 0.0
     for i in range(trials):
         remaining = campaign(attackers, defending_territories)
         if remaining >= desired_remaining_attackers:
             success+=1.0
+        if remaining == 0:
+            failures+=1
         total += remaining
-    return success/trials, total/trials
+    return success/trials * 100, total/trials, failures/trials * 100
 
 
 
-def determine_attackers(defending_territories, desired_remaining_attackers):
+def determine_attackers(desired_remaining_attackers, defending_territories):
     attackers = 1
     trials_per_attacker = 10_000
+    print("Attack Success  Failure Avg")
     while True:
-        prob, avg = probability_desired_remaining(attackers, defending_territories, desired_remaining_attackers, trials_per_attacker)
+        prob, avg, prob_failure = probability_desired_remaining(attackers, defending_territories, desired_remaining_attackers, trials_per_attacker)
+        if prob_failure > 99.999:
+            prob_failure_str="100  "
+        else:
+            prob_failure_str="%05.2f" % (prob_failure)
         attackers+=1
-        print("%-5s%.4f %.2f" % (attackers, prob, avg))
-        if prob > .99:
+        print("%-7s%05.2f    %s  %2s" % (attackers, prob, prob_failure_str, int(avg)))
+        if prob > 99:
             break
 
 
 def main():
-    determine_attackers([4, 5, 1, 1, 1, 1], 10)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("remaining",metavar="A", type=int)
+    parser.add_argument("territories", metavar="N", type=int, nargs="+")
+
+    args = parser.parse_args()
+    print(f"Calculating number of attackers needed to attack {args.territories} and still have {args.remaining} remaining ... ")
+    
+    determine_attackers(args.remaining, args.territories)
 
 
 if __name__ == "__main__":
