@@ -76,51 +76,52 @@ func campaign(attackers int, defenderingTerritories []int) int {
 
 func probabilityDesiredRemaining(attackers int, defendingTerritories []int, trials int) (float64, float64, float64, float64) {
 	successes := 0.0
-	threads := 10
 	const batches = 1
-	remainingChannel := make(chan [batches]int, threads)
-	stop := false
-	for i := 0; i < threads; i++ {
 
-		go func() {
-			for {
-
-				//fmt.Println(stop)
-				var remaining [batches]int
-				for j := 0; j < batches; j++ {
-					remaining[j] = campaign(attackers, defendingTerritories)
-				}
-
-				remainingChannel <- remaining
-				if stop {
-					//panic("STOP")
-				}
-			}
-		}()
-	}
 	results := make([]int, trials)
-	batchRuns := trials / batches
 
-	for i := 0; i < batchRuns; i++ {
+	for i := 0; i < trials; i++ {
 		//fmt.Println(i)
-		remainingBatch := <-remainingChannel
-		for j := 0; j < batches; j++ {
-			remaining := remainingBatch[j]
-			//fmt.Printf("Attacking with %d against %v left %d\n", attackers, defendingTerritories, remaining)
-			if remaining != 0 {
-				successes++
-			}
-			results[batches*i+j] = remaining
+		remaining := campaign(attackers, defendingTerritories)
+		if remaining != 0 {
+			successes += 1
 		}
+
+		results[i] = remaining
 		//	fmt.Println(i)
 	}
 	resultsForStats := stats.LoadRawData(results)
 	p10, _ := resultsForStats.Percentile(10)
 	p50, _ := resultsForStats.Percentile(50)
 	p90, _ := resultsForStats.Percentile(90)
-	stop = true
 	floatTrials := float64(trials)
 	return p10, p50, p90, (successes / floatTrials) * 100
+}
+
+type attackerSummary struct {
+	p10  float64
+	p50  float64
+	p90  float64
+	prob float64
+}
+
+func (a attackerSummary) String() string {
+	probStr := "100  "
+	if a.prob < 99.999 {
+		probStr = fmt.Sprintf("%05.2f", a.prob)
+	}
+
+	return fmt.Sprintf("%s    %-3d   %-3d   %-3d", probStr, int(a.p10), int(a.p50), int(a.p90))
+}
+
+func getAttackerSummary(attackers int, defendingTerritories []int, trialsPerAttacker int) attackerSummary {
+	p10, p50, p90, prob := probabilityDesiredRemaining(attackers, defendingTerritories, trialsPerAttacker)
+	return attackerSummary{
+		p10:  p10,
+		p50:  p50,
+		p90:  p90,
+		prob: prob,
+	}
 }
 
 func DetermineAttackers(defendingTerritories []int) {
@@ -133,15 +134,11 @@ func DetermineAttackers(defendingTerritories []int) {
 	fmt.Printf("Calculating size of force needed to defeat %d armies to claim %d territories\n", totalDefendingArmies, len(defendingTerritories))
 	fmt.Println("Attack Success  p10   p50   p90")
 	for {
-		p10, p50, p90, prob := probabilityDesiredRemaining(attackers, defendingTerritories, trialsPerAttacker)
-		probStr := "100  "
-		if prob < 99.999 {
-			probStr = fmt.Sprintf("%05.2f", prob)
-		}
-		attackers += 1
-		fmt.Printf("%-7d%s    %-3d   %-3d   %-3d\n", attackers, probStr, int(p10), int(p50), int(p90))
-		if prob > 99.99 {
+		summary := getAttackerSummary(attackers, defendingTerritories, trialsPerAttacker)
+		fmt.Printf("%-7d%s\n", attackers, summary)
+		if summary.prob > 99.99 {
 			break
 		}
+		attackers++
 	}
 }
