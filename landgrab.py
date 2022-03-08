@@ -62,6 +62,7 @@ def campaign(attackers, defending_territories):
         # After invasion, we will leave behind everyone, and whoever is in the previously
         # defending territory will become next attackers. If invasion failed, we quit now
         _, attackers, success = invade(attackers, defending_territory)
+        #print(f"Invading {attackers}->{defending_territory} leaves {newAttackers} in defending w success {success}")
         if not success:
             return 0
     return attackers
@@ -74,6 +75,7 @@ def probability_desired_remaining(attackers, defending_territories, desired_rema
     failures = 0.0
     for i in range(trials):
         remaining = campaign(attackers, defending_territories)
+        #print(f"attacking with {attackers} against {defending_territories} left {remaining}")
         if remaining >= desired_remaining_attackers:
             success+=1.0
         if remaining == 0:
@@ -100,6 +102,7 @@ def determine_attackers(desired_remaining_attackers, defending_territories):
 
 
 def main():
+
     parser = argparse.ArgumentParser()
     parser.add_argument("remaining",metavar="A", type=int)
     parser.add_argument("territories", metavar="N", type=int, nargs="+")

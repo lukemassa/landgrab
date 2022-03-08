@@ -1,11 +1,9 @@
 package main
 
 import (
-    "github.com/lukemassa/landgrab/pkg/landgrab"
-    "fmt"
+	"github.com/lukemassa/landgrab/pkg/landgrab"
 )
 
 func main() {
-    fmt.Println("HI")
+	landgrab.DetermineAttackers([]int{5, 4, 1, 5, 2, 1, 7, 2})
 }
-
