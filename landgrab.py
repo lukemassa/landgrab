@@ -102,6 +102,8 @@ def determine_attackers(desired_remaining_attackers, defending_territories):
 
 
 def main():
+    print("DEPRECATED! Use the go version")
+    return
 
     parser = argparse.ArgumentParser()
     parser.add_argument("remaining",metavar="A", type=int)
