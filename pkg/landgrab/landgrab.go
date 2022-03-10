@@ -146,9 +146,8 @@ func DetermineAttackers(defendingTerritories []int) {
 	results := make(chan attackerSummary, 100)
 	attackersChannel := make(chan int, 10)
 	go func() {
-        // Can't attack with only 1
-		for i := 2; ; i++ {
-            //fmt.Printf("Please work on %d\n", i)
+		for i := 0; ; i++ {
+			//fmt.Printf("Please work on %d\n", i)
 			attackersChannel <- i
 		}
 	}()
