@@ -99,10 +99,11 @@ func probabilityDesiredRemaining(attackers int, defendingTerritories []int, tria
 }
 
 type attackerSummary struct {
-	p10  float64
-	p50  float64
-	p90  float64
-	prob float64
+	attackers int
+	p10       float64
+	p50       float64
+	p90       float64
+	prob      float64
 }
 
 func (a attackerSummary) String() string {
@@ -111,34 +112,55 @@ func (a attackerSummary) String() string {
 		probStr = fmt.Sprintf("%05.2f", a.prob)
 	}
 
-	return fmt.Sprintf("%s    %-3d   %-3d   %-3d", probStr, int(a.p10), int(a.p50), int(a.p90))
+	return fmt.Sprintf("%-7d%s    %-3d   %-3d   %-3d", a.attackers, probStr, int(a.p10), int(a.p50), int(a.p90))
 }
 
 func getAttackerSummary(attackers int, defendingTerritories []int, trialsPerAttacker int) attackerSummary {
 	p10, p50, p90, prob := probabilityDesiredRemaining(attackers, defendingTerritories, trialsPerAttacker)
 	return attackerSummary{
-		p10:  p10,
-		p50:  p50,
-		p90:  p90,
-		prob: prob,
+		attackers: attackers,
+		p10:       p10,
+		p50:       p50,
+		p90:       p90,
+		prob:      prob,
+	}
+}
+
+func worker(defendingTerritories []int, trialsPerAttacker int, results chan attackerSummary, attackersChannel chan int) {
+	for {
+		attackers := <-attackersChannel
+		results <- getAttackerSummary(attackers, defendingTerritories, trialsPerAttacker)
 	}
 }
 
 func DetermineAttackers(defendingTerritories []int) {
-	attackers := 1
+	//attackers := 1
 	trialsPerAttacker := 10_000
+	threads := 1
 	totalDefendingArmies := 0
 	for i := 0; i < len(defendingTerritories); i++ {
 		totalDefendingArmies += defendingTerritories[i]
 	}
 	fmt.Printf("Calculating size of force needed to defeat %d armies to claim %d territories\n", totalDefendingArmies, len(defendingTerritories))
 	fmt.Println("Attack Success  p10   p50   p90")
-	for {
-		summary := getAttackerSummary(attackers, defendingTerritories, trialsPerAttacker)
-		fmt.Printf("%-7d%s\n", attackers, summary)
-		if summary.prob > 99.99 {
-			break
+	results := make(chan attackerSummary, 100)
+	attackersChannel := make(chan int, 10)
+	go func() {
+        // Can't attack with only 1
+		for i := 2; ; i++ {
+            //fmt.Printf("Please work on %d\n", i)
+			attackersChannel <- i
 		}
-		attackers++
+	}()
+	for i := 0; i < threads; i++ {
+		go worker(defendingTerritories, trialsPerAttacker, results, attackersChannel)
+	}
+	for {
+		summary := <-results
+		fmt.Printf("%s\n", summary)
+		if summary.prob > 99.99 {
+			return
+		}
+
 	}
 }

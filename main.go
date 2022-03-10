@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	landgrab.DetermineAttackers([]int{5, 4, 1, 5, 2, 1, 7, 2})
+	landgrab.DetermineAttackers([]int{1})
 }
