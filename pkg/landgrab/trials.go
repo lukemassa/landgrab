@@ -8,6 +8,8 @@ import (
 	"github.com/montanaflynn/stats"
 )
 
+const minAttackers int = 2
+
 type attackerSummary struct {
 	attackers int
 	p10       float64
@@ -34,6 +36,7 @@ func (a attackerSummary) String() string {
 
 func (a attackerTrial) run() attackerSummary {
 	successes := 0.0
+	//fmt.Printf("Working on attacker %d\n", a.attackers)
 
 	var results stats.Float64Data
 	trials := 0
@@ -68,7 +71,7 @@ func (a attackerTrial) run() attackerSummary {
 	}
 }
 
-func broker(trials <-chan attackerTrial, results chan<- attackerSummary) {
+func oneBroker(trials <-chan attackerTrial, results chan<- attackerSummary) {
 	for {
 		trial := <-trials
 		result := trial.run()
@@ -76,8 +79,55 @@ func broker(trials <-chan attackerTrial, results chan<- attackerSummary) {
 	}
 }
 
+func reorderResults(resultBufferChan <-chan attackerSummary, results chan<- attackerSummary) {
+
+	// Pretend like you saw one before the min so we can start sending right away
+	lastSent := minAttackers - 1
+	resultBuffer := make([]attackerSummary, 0)
+	for {
+		result := <-resultBufferChan
+		//fmt.Printf("Got result for %d\n", result.attackers)
+		resultBuffer = append(resultBuffer, result)
+
+		// Loop trying to send until there is nothing in the buffer to send
+		for {
+			sent := false
+			// Walk through the buffer backwards, if a result is the
+			// one to send, send it, and clip it from the end of the buffer
+			for i := len(resultBuffer) - 1; i >= 0; i-- {
+				if resultBuffer[i].attackers == lastSent+1 {
+
+					results <- resultBuffer[i]
+					lastSent = resultBuffer[i].attackers
+					resultBuffer = append(resultBuffer[:i], resultBuffer[i+1:]...)
+					sent = true
+				}
+			}
+			if !sent {
+				break
+			}
+		}
+	}
+}
+
+func broker(trials <-chan attackerTrial, results chan<- attackerSummary) {
+	numWorkers := 10
+	resultBufferChan := make(chan attackerSummary, numWorkers)
+	go reorderResults(resultBufferChan, results)
+	for i := 0; i < numWorkers; i++ {
+		oneBrokerAttackerChan := make(chan attackerTrial)
+		go func() {
+
+			go oneBroker(oneBrokerAttackerChan, resultBufferChan)
+			for {
+				trial := <-trials
+				oneBrokerAttackerChan <- trial
+			}
+		}()
+	}
+}
+
 func DetermineAttackers(defendingTerritories []int) {
-	//attackers := 1
 	margin := .1
 	totalDefendingArmies := 0
 	for i := 0; i < len(defendingTerritories); i++ {
@@ -91,9 +141,9 @@ func DetermineAttackers(defendingTerritories []int) {
 	totalTrials := 0
 	trials := make(chan attackerTrial)
 	results := make(chan attackerSummary)
-	go broker(trials, results)
+	broker(trials, results)
 	finished := false
-	for attackers := 2; !finished; {
+	for attackers := minAttackers; !finished; {
 		select {
 
 		case summary := <-results:
