@@ -93,7 +93,7 @@ func DetermineAttackers(defendingTerritories []int) {
 	results := make(chan attackerSummary)
 	go broker(trials, results)
 	finished := false
-	for attackers := 2; !finished; attackers++ {
+	for attackers := 2; !finished; {
 		select {
 
 		case summary := <-results:
@@ -103,9 +103,8 @@ func DetermineAttackers(defendingTerritories []int) {
 			if summary.prob > 99.99 {
 				finished = true
 			}
-		default:
-			trial := attackerTrial{attackers: attackers, defendingTerritories: defendingTerritories, margin: margin}
-			trials <- trial
+		case trials <- attackerTrial{attackers: attackers, defendingTerritories: defendingTerritories, margin: margin}:
+			attackers++
 		}
 	}
 	duration := time.Since(start)
