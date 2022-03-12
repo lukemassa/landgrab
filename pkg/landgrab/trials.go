@@ -17,6 +17,12 @@ type attackerSummary struct {
 	trials    int
 }
 
+type attackerTrial struct {
+	defendingTerritories []int
+	attackers            int
+	margin               float64
+}
+
 func (a attackerSummary) String() string {
 	probStr := "100  "
 	if a.prob < 99.999 {
@@ -26,7 +32,7 @@ func (a attackerSummary) String() string {
 	return fmt.Sprintf("%-7d%s    %-3d   %-3d   %-3d   %-3d", a.attackers, probStr, int(a.p10), int(a.p50), int(a.p90), a.trials)
 }
 
-func getAttackerSummary(attackers int, defendingTerritories []int, margin float64) attackerSummary {
+func (a attackerTrial) run() attackerSummary {
 	successes := 0.0
 
 	var results stats.Float64Data
@@ -35,7 +41,7 @@ func getAttackerSummary(attackers int, defendingTerritories []int, margin float6
 	zBar := 1.96 // 95% confidence
 
 	for ; ; trials++ {
-		remaining := float64(campaign(attackers, defendingTerritories))
+		remaining := float64(campaign(a.attackers, a.defendingTerritories))
 		if remaining != 0 {
 			successes += 1
 		}
@@ -43,7 +49,7 @@ func getAttackerSummary(attackers int, defendingTerritories []int, margin float6
 		results = append(results, remaining)
 		if trials >= minTrials {
 			stddev, _ := results.StandardDeviation()
-			if zBar*stddev/math.Sqrt(float64(trials)) < margin {
+			if zBar*stddev/math.Sqrt(float64(trials)) < a.margin {
 				break
 			}
 		}
@@ -53,12 +59,20 @@ func getAttackerSummary(attackers int, defendingTerritories []int, margin float6
 	p90, _ := results.Percentile(90)
 	floatTrials := float64(trials)
 	return attackerSummary{
-		attackers: attackers,
+		attackers: a.attackers,
 		p10:       p10,
 		p50:       p50,
 		p90:       p90,
 		prob:      (successes / floatTrials) * 100,
 		trials:    trials,
+	}
+}
+
+func broker(trials <-chan attackerTrial, results chan<- attackerSummary) {
+	for {
+		trial := <-trials
+		result := trial.run()
+		results <- result
 	}
 }
 
@@ -75,12 +89,23 @@ func DetermineAttackers(defendingTerritories []int) {
 	// Start attackers at 2 since that's how many you need to attack
 	start := time.Now()
 	totalTrials := 0
-	for attackers := 2; ; attackers++ {
-		summary := getAttackerSummary(attackers, defendingTerritories, margin)
-		totalTrials += summary.trials
-		fmt.Printf("%s\n", summary)
-		if summary.prob > 99.99 {
-			break
+	trials := make(chan attackerTrial)
+	results := make(chan attackerSummary)
+	go broker(trials, results)
+	finished := false
+	for attackers := 2; !finished; attackers++ {
+		select {
+
+		case summary := <-results:
+
+			totalTrials += summary.trials
+			fmt.Printf("%s\n", summary)
+			if summary.prob > 99.99 {
+				finished = true
+			}
+		default:
+			trial := attackerTrial{attackers: attackers, defendingTerritories: defendingTerritories, margin: margin}
+			trials <- trial
 		}
 	}
 	duration := time.Since(start)
