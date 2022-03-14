@@ -4,7 +4,9 @@ Script to help determine how many pieces to place in order to take over a number
 
 ## Usage
 
-Run `./landgrab -h` and follow the instructions.
+1. `git clone git@github.com:lukemassa/landgrab.git`
+2. `cd landgrab`
+3. `./landgrab -h` and follow the instructions.
 
 If go is not installed, it will recommend you do that.
 
