@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+    "strings"
 
 	"github.com/lukemassa/landgrab/pkg/landgrab"
 )
@@ -15,7 +16,8 @@ func usage() {
 }
 
 func main() {
-	if len(os.Args) < 2 {
+    // If no args, or arg begins with '-', just print the usage
+	if len(os.Args) < 2 || strings.HasPrefix(os.Args[1], "-") {
 		usage()
 	}
 	attackers := make([]int, len(os.Args)-1)
