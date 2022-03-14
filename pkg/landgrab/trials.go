@@ -135,7 +135,7 @@ func DetermineAttackers(defendingTerritories []int) {
 	}
 
 	fmt.Printf("Calculating size of force needed to defeat %d armies to claim %d territories\n", totalDefendingArmies, len(defendingTerritories))
-	fmt.Println("Attack Success  p10   p50   p90 trials")
+	fmt.Println("Attack Success  p10   p50   p90   trials")
 	// Start attackers at 2 since that's how many you need to attack
 	start := time.Now()
 	totalTrials := 0
