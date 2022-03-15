@@ -4,18 +4,12 @@ Script to help determine how many pieces to place in order to take over a number
 
 ## Usage
 
-### Mac/Linux
+The code has been tested on windows, MacOS, and CentOS. In general, it doesn't use any non-portable features of golang so should work anywhere.
 
+1. Make sure go is installed (https://go.dev)
 1. `git clone git@github.com:lukemassa/landgrab.git`
 2. `cd landgrab`
-3. `./landgrab -h` and follow the instructions.
-
-### Windows
-
-1. Make sure go is installed (https://go.dev/)
-1. `git clone git@github.com:lukemassa/landgrab.git`
-1. `dir landgrab`
-1. `go run main.go -h` and follow the instructions.
+3. `go run main.go -h` and follow the instructions.
 
 ## Understanding the output
 
