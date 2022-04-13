@@ -8,6 +8,7 @@ import (
 )
 
 const diceSides = 6
+const maxDefenders = 2
 
 // always attack with 3 if possible
 const preferredAttackers = 3
@@ -33,7 +34,8 @@ func roll(numDice int, r *rand.Rand) []int {
 func oneRound(attackers, defenders, dice int, r *rand.Rand) (int, int) {
 	// Can only attack with as many attackers as are present
 	attackerDice := min(dice, attackers)
-	defenderDice := min(2, defenders)
+	// Defender defends with as many as it can, up to maxDefenders
+	defenderDice := min(maxDefenders, defenders)
 
 	matchups := min(attackerDice, defenderDice)
 
