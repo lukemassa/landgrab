@@ -42,6 +42,8 @@ func oneRound(attackers, defenders, dice int, r *rand.Rand) (int, int) {
 	attackerRoll := roll(attackerDice, r)
 	defenderRoll := roll(defenderDice, r)
 
+	// Walk through each matchup, for every one "lost", that player decreases an army
+	// Note tie goes to the defender
 	for i := 0; i < matchups; i++ {
 		if attackerRoll[i] > defenderRoll[i] {
 			defenders--
@@ -55,9 +57,13 @@ func oneRound(attackers, defenders, dice int, r *rand.Rand) (int, int) {
 // Attack with as much as you ahve until it's either taken or you can't attack
 func invade(attackers, defenders int, r *rand.Rand) (int, int, bool) {
 
+	// While attackers have more than one (can still attack) and defenders more than 0
+	// (still own the territory) continue to attack
 	for attackers > 1 && defenders > 0 {
 		attackers, defenders = oneRound(attackers, defenders, preferredAttackers, r)
 	}
+	// Defender lost, leave one "behind" and move the rest
+	// Possible TODO: Play around with what happens if you leave behind more than one
 	if defenders == 0 {
 		return 1, attackers - 1, true
 	}
