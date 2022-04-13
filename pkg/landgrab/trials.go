@@ -71,6 +71,8 @@ func (a attackerTrial) run() attackerSummary {
 	}
 }
 
+// oneBroker runs sequentially and simply grabs a trial from a channel
+// calculates its results and puts it in the new channel
 func oneBroker(trials <-chan attackerTrial, results chan<- attackerSummary) {
 	for {
 		trial := <-trials
@@ -79,6 +81,8 @@ func oneBroker(trials <-chan attackerTrial, results chan<- attackerSummary) {
 	}
 }
 
+// reorderResults takes results from a buffer channel and puts them
+// into a results channel
 func reorderResults(resultBufferChan <-chan attackerSummary, results chan<- attackerSummary) {
 
 	// Pretend like you saw one before the min so we can start sending right away
@@ -117,11 +121,12 @@ func broker(trials <-chan attackerTrial, results chan<- attackerSummary) {
 	for i := 0; i < numWorkers; i++ {
 		oneBrokerAttackerChan := make(chan attackerTrial)
 		go func() {
-
+			// All this anonymous function is doing is firing off the broker then
+			// reodering the results by sending them to the reordering channel
 			go oneBroker(oneBrokerAttackerChan, resultBufferChan)
 			for {
-				trial := <-trials
-				oneBrokerAttackerChan <- trial
+
+				oneBrokerAttackerChan <- (<-trials)
 			}
 		}()
 	}
