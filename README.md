@@ -1,10 +1,10 @@
-# landgrab
+# Landgrab
 
 Script to help determine how many pieces to place in order to take over a number of territories in https://landgrab.net/
 
 ## Usage
 
-The code has been tested on windows, MacOS, and CentOS. In general, it doesn't use any non-portable features of golang so should work anywhere.
+The code has been tested on windows, MacOS, and CentOS. It doesn't use any non-portable features of go so should theoretically work anywhere go does.
 
 1. Make sure go is installed (https://go.dev)
 1. `git clone git@github.com:lukemassa/landgrab.git`
@@ -14,35 +14,39 @@ The code has been tested on windows, MacOS, and CentOS. In general, it doesn't u
 ## Understanding the output
 
 ```
-lukemassa@Lukes-MacBook-Pro landgrab % ./landgrab 3 2 1          
+lukemassa@Lukes-MacBook-Pro landgrab % ./landgrab 3 2 1
 Calculating size of force needed to defeat 6 armies to claim 3 territories
+Shows the percent chance of overtaking all territories, as well as percentile of how many attacking armies are expected to be left
+
 Attack Success  p10   p50   p90   trials
 2      00.00    0     0     0     100
 3      00.00    0     0     0     100
-4      06.00    0     0     0     100
-5      13.79    0     0     1     116
-6      32.34    0     0     2     303
-7      44.41    0     0     3     653
-8      57.69    0     1     4     1054
-9      68.21    0     2     5     1532
-10     77.39    0     3     6     1942
-11     84.76    0     4     7     2271
-12     88.77    0     5     8     2805
-13     93.23    2     6     9     2896
-14     94.71    2     7     10    3117
-15     97.29    4     8     11    3206
-16     97.98    5     9     12    3410
-17     98.38    5     10    13    3705
-18     99.46    6     11    14    3538
-19     99.54    8     12    15    3505
-20     99.81    9     13    16    3679
-21     99.94    10    14    17    3458
-22     99.89    11    15    18    3560
-23     100      12    16    19    3391
-Finished 48441 trials in 315.358621ms
+4      03.00    0     0     0     100
+5      14.00    0     0     1     100
+6      27.64    0     0     2     275
+7      41.98    0     0     3     667
+8      55.62    0     1     4     1077
+9      68.88    0     2     5     1536
+10     79.60    0     3     6     1873
+11     84.56    0     4     7     2377
+12     90.20    1     5     8     2611
+13     92.72    1     6     9     2938
+14     95.68    3     7     10    3102
+15     97.41    4     8     11    3171
+16     97.82    4     9     12    3584
+17     98.80    5     10    13    3496
+18     99.31    6     11    14    3496
+19     99.73    8     12    15    3283
+20     99.89    8     13    16    3488
+21     99.81    9     14    17    3644
+22     99.94    10    15    18    3608
+23     99.94    12    16    19    3610
+24     100      12    17    20    3608
+
+Finished 51844 trials in 55.364767ms
 ```
 
-This is telling you that, say, if you start attacking three territories in a row with 14 armies, you'd have a 94.71% chance of getting to the end, that there's a 10% chance you'd have 2 armies remaining, 50% chance you'd have 7, and 90% chance you'd have 13 (technically these are percentiles), having run 3117 trials (mostly for debugging).
+This is telling you that, say, if you start attacking three territories in a row with 14 armies, you'd have a 95.68% chance of getting to the end, that there's a 10% chance you'd have 3 armies remaining, 50% chance you'd have 7, and 90% chance you'd have 10 (technically these are percentiles), having run 3117 test trials (this value included mostly for debugging).
 
 The assumption is you attack in a single straight line, leave exactly one army in every conquered territory, and always attack with 3 if possible.
 
@@ -52,6 +56,6 @@ The assumption is you attack in a single straight line, leave exactly one army i
 
 `pkg/landgrab/trials.go` runs a number of "trials" per attacker and then does some averages/etc on the results. The number of trials it runs per attacker is a function of how long it takes to get "confident" (which is why the trials go up as you increase attackers, because there's more variability), but it always runs at least 100 trials.
 
-The code runs in parallel as fast as it possibly can, so if you enter a large number like `./landgrab 100` you'll probably see a noticeable slowdown in your computer. Simply run `ctrl+c` to kill it.
+The code runs in parallel as fast as it possibly can, so if you enter a large number like `./landgrab 100` you might see a noticeable slowdown in your computer/fans start to turn on. Simply run `ctrl+c` (or equivalent) to kill it.
 
-It doesn't have any temp files or anything to cleanup, so always safe to stop it.
+It doesn't have any temp files or anything to cleanup, so always safe to stop it midway.
