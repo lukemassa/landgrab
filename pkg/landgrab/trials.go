@@ -35,6 +35,8 @@ func (a attackerSummary) String() string {
 	return fmt.Sprintf("%-7d%s    %-3d   %-3d   %-3d   %-3d", a.attackers, probStr, int(a.p10), int(a.p50), int(a.p90), a.trials)
 }
 
+// Runs one trial; for a specific number of attackers, return statistics about
+// how successful a campaign would be
 func (a attackerTrial) run(r *rand.Rand) attackerSummary {
 	successes := 0.0
 	//fmt.Printf("Working on attacker %d\n", a.attackers)
@@ -123,7 +125,8 @@ func reorderResults(resultBufferChan <-chan attackerSummary, results chan<- atta
 	}
 }
 
-func broker(trials <-chan attackerTrial, results chan<- attackerSummary) {
+// Coordinates the brokers that do the trials, reorders the results, and returns them
+func brokers(trials <-chan attackerTrial, results chan<- attackerSummary) {
 	numWorkers := 10
 	resultBufferChan := make(chan attackerSummary, numWorkers)
 	go reorderResults(resultBufferChan, results)
@@ -141,6 +144,8 @@ func broker(trials <-chan attackerTrial, results chan<- attackerSummary) {
 	}
 }
 
+// Given a list of defending territories, prints to stdout a summary of how many attackers
+// should be placed to overtake them
 func DetermineAttackers(defendingTerritories []int) {
 	margin := .1
 	totalDefendingArmies := 0
@@ -155,7 +160,7 @@ func DetermineAttackers(defendingTerritories []int) {
 	totalTrials := 0
 	trials := make(chan attackerTrial)
 	results := make(chan attackerSummary)
-	broker(trials, results)
+	brokers(trials, results)
 	finished := false
 	for attackers := minAttackers; !finished; {
 		select {

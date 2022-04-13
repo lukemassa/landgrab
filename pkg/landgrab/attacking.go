@@ -1,11 +1,16 @@
 package landgrab
 
+// Logic for how "attacking" is implemented in landgrab. It's similar to the board game Risk
+
 import (
 	"math/rand"
 	"sort"
 )
 
 const diceSides = 6
+
+// always attack with 3 if possible
+const preferredAttackers = 3
 
 func min(a, b int) int {
 	if a < b {
@@ -14,6 +19,7 @@ func min(a, b int) int {
 	return b
 }
 
+// Roll a number of dice, and return them in reverse order
 func roll(numDice int, r *rand.Rand) []int {
 	ret := make([]int, numDice)
 	for i := 0; i < numDice; i++ {
@@ -23,7 +29,9 @@ func roll(numDice int, r *rand.Rand) []int {
 	return ret
 }
 
+// Simulate a single click of the "attack" button
 func oneRound(attackers, defenders, dice int, r *rand.Rand) (int, int) {
+	// Can only attack with as many attackers as are present
 	if dice > attackers {
 		dice = attackers
 	}
@@ -49,7 +57,7 @@ func oneRound(attackers, defenders, dice int, r *rand.Rand) (int, int) {
 func invade(attackers, defenders int, r *rand.Rand) (int, int, bool) {
 
 	for attackers > 1 && defenders > 0 {
-		attackers, defenders = oneRound(attackers, defenders, 3, r)
+		attackers, defenders = oneRound(attackers, defenders, preferredAttackers, r)
 	}
 	if defenders == 0 {
 		return 1, attackers - 1, true

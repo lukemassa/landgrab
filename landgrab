@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# For ease of use on unix-based compueters. You can always just run `go run main.go' directly
+
 if ! which go &>/dev/null
 then
     echo "Must install go (https://go.dev/doc/install)"
