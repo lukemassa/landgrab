@@ -32,9 +32,6 @@ func roll(numDice int, r *rand.Rand) []int {
 // Simulate a single click of the "attack" button
 func oneRound(attackers, defenders, dice int, r *rand.Rand) (int, int) {
 	// Can only attack with as many attackers as are present
-	if dice > attackers {
-		dice = attackers
-	}
 	attackerDice := min(dice, attackers)
 	defenderDice := min(2, defenders)
 
