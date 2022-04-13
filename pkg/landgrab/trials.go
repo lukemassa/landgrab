@@ -3,6 +3,7 @@ package landgrab
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/montanaflynn/stats"
@@ -34,7 +35,7 @@ func (a attackerSummary) String() string {
 	return fmt.Sprintf("%-7d%s    %-3d   %-3d   %-3d   %-3d", a.attackers, probStr, int(a.p10), int(a.p50), int(a.p90), a.trials)
 }
 
-func (a attackerTrial) run() attackerSummary {
+func (a attackerTrial) run(r *rand.Rand) attackerSummary {
 	successes := 0.0
 	//fmt.Printf("Working on attacker %d\n", a.attackers)
 
@@ -44,7 +45,7 @@ func (a attackerTrial) run() attackerSummary {
 	zBar := 1.96 // 95% confidence
 
 	for ; ; trials++ {
-		remaining := float64(campaign(a.attackers, a.defendingTerritories))
+		remaining := float64(campaign(a.attackers, a.defendingTerritories, r))
 		if remaining != 0 {
 			successes += 1
 		}
@@ -74,9 +75,17 @@ func (a attackerTrial) run() attackerSummary {
 // oneBroker runs sequentially and simply grabs a trial from a channel
 // calculates its results and puts it in the new channel
 func oneBroker(trials <-chan attackerTrial, results chan<- attackerSummary) {
+
+	// We create a source here instead of relying on the default source
+	// since the default source is thread-safe, and thus must spend a lot of time
+	// locking and unlocking.
+	// A newSource is not threadsafe (https://pkg.go.dev/math/rand), which is why it is created here
+	// since this method is run sequentually
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
 	for {
 		trial := <-trials
-		result := trial.run()
+		result := trial.run(r)
 		results <- result
 	}
 }
