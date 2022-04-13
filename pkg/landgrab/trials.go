@@ -154,6 +154,8 @@ func DetermineAttackers(defendingTerritories []int) {
 	}
 
 	fmt.Printf("Calculating size of force needed to defeat %d armies to claim %d territories\n", totalDefendingArmies, len(defendingTerritories))
+	fmt.Println("Shows the percent chance of overtaking all territories, as well as percentile of how many attacking armies are expected to be left")
+	fmt.Println()
 	fmt.Println("Attack Success  p10   p50   p90   trials")
 	// Start attackers at 2 since that's how many you need to attack
 	start := time.Now()
@@ -177,5 +179,6 @@ func DetermineAttackers(defendingTerritories []int) {
 		}
 	}
 	duration := time.Since(start)
+	fmt.Println()
 	fmt.Printf("Finished %d trials in %v\n", totalTrials, duration)
 }
