@@ -4,7 +4,7 @@ package landgrab
 
 import (
 	"math/rand"
-	"sort"
+	"slices"
 )
 
 const diceSides = 6
@@ -13,20 +13,14 @@ const maxDefenders = 2
 // always attack with 3 if possible
 const preferredAttackers = 3
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // Roll a number of dice, and return them in reverse order
 func roll(numDice int, r *rand.Rand) []int {
 	ret := make([]int, numDice)
 	for i := 0; i < numDice; i++ {
 		ret[i] = r.Intn(diceSides) + 1
 	}
-	sort.Sort(sort.Reverse(sort.IntSlice(ret)))
+	slices.Sort(ret)
+	slices.Reverse(ret)
 	return ret
 }
 
